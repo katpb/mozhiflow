@@ -1,0 +1,61 @@
+# MozhiFlow optional Sarvam + Ollama profile; copy to an ignored *.local.toml before customizing.
+[paths]
+input = "inputs"
+output_dir = "HybridTranscripts"
+
+[preprocessing]
+enabled = true
+normalize = true
+vad_backend = "none" # Set "silero" after installing requirements-hybrid.txt
+threshold = 0.35
+min_silence_seconds = 5.0 # Applied AFTER boundary padding: only long gap interiors removed
+padding_seconds = 0.75
+min_speech_ms = 250
+max_intervals = 200
+
+[recognition]
+backend = "sarvam"
+model = "saaras:v4"
+language = "ta-IN"
+vocabulary = ["API", "Kafka", "Redis", "integration"] # V4 keyterms, <=50 unique, <=64 chars each
+
+[sarvam]
+diarization = false # Sends with_diarization; with_diarization is also a supported TOML alias
+# num_speakers = 2 # Optional 1-20; omit for automatic detection
+# speaker_names = { codemix = { "0" = "Reviewed name" }, translate = { "1" = "Reviewed name" } }
+budget_inr = 0.0 # REQUIRED positive cumulative ceiling before a new upload/job
+rate_per_minute = 0.49
+diarization_rate_per_minute = 0.75 # Conservative INR45/hour; official pricing pages disagree (verified 2026-10-19)
+cost_margin = 1.2 # Conservative allowance; estimates exclude tax
+poll_interval = 5.0
+poll_timeout = 600.0 # Timeout preserves job ID; rerun to resume polling
+
+[translation]
+backend = "ollama"
+model = "gemma3:12b"
+endpoint = "http://127.0.0.1:11434"
+prompt = ""
+group_segments = 8
+context_segments = 1
+max_chars = 4000 # Targets + neighbor text bound; individual segments are never silently truncated
+retries = 2
+[translation.options]
+temperature = 0.0
+seed = 42
+num_ctx = 8192
+num_predict = 2048
+
+[outputs]
+transcript = true
+translation = true
+formats = ["txt", "srt", "json"]
+filename = "{stem}.{stage}"
+
+[batch]
+recursive = true
+continue_on_error = true
+
+[runtime]
+offline = false # Sarvam requires internet; this does NOT authorize uploads
+request_timeout = 120.0
+overwrite = false

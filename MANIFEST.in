@@ -1,0 +1,7 @@
+include README.md HYBRID.md AGENTS.md
+include setup.sh transcribe.sh requirements-hybrid.txt
+include config.example.toml config.hybrid.toml .env.1password.example
+recursive-include tests *.py
+recursive-include scripts *.py
+recursive-include docs *.md
+include validation/MOZHIFLOW_RENAME_REPORT.md validation/SAARAS_V4_REPORT.md

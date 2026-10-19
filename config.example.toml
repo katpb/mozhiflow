@@ -1,0 +1,62 @@
+# MozhiFlow portable example. Copy to config.toml and adjust paths/budget for your machine.
+[paths]
+input = "input"
+output_dir = "Transcripts"
+
+[preprocessing]
+enabled = true
+codec = "flac" # Lossless compressed payload shared by both jobs; wav is also supported
+sample_rate = 16000
+normalize = false # Avoid needless processing of already compatible audio
+retain_intermediates = true # Keep normalized scratch WAV; the shared upload payload is always retained
+vad_backend = "none" # "silero" enables conservative local speech detection
+threshold = 0.35
+min_silence_seconds = 5.0 # Minimum removable gap interior AFTER padding
+padding_seconds = 0.75
+min_speech_ms = 250
+max_intervals = 200
+
+[recognition]
+backend = "sarvam"
+model = "saaras:v4"
+mode = "codemix"
+language = "ta-IN" # Also accepts ta or auto
+vocabulary = ["API", "Kafka", "Redis", "integration"]
+
+[translation]
+backend = "sarvam"
+model = "saaras:v4"
+mode = "translate" # Translates the same audio independently; no Ollama needed
+
+[sarvam]
+api_key_env = "SARVAM_API_KEY" # Environment variable NAME, never a secret value
+with_timestamps = true
+timestamp_policy = "flag" # Retain text and flag missing/unmappable times; never invent subtitle cues
+diarization = false # Sends with_diarization; with_diarization is also a supported TOML alias
+# num_speakers = 2 # Optional 1-20; omit for automatic detection
+# speaker_names = { codemix = { "0" = "Reviewed name" }, translate = { "1" = "Reviewed name" } }
+budget_inr = 150.0 # Local cost cap in INR for the explicit scope below, including BOTH modes
+budget_scope = "persistent" # persistent | recording | invocation; history is never reset
+rate_per_minute = 0.49
+diarization_rate_per_minute = 0.75 # Conservative INR45/hour; official pricing pages disagree (verified 2026-10-19)
+cost_margin = 1.2
+read_retries = 2 # Read-only HTTP retries; ambiguous mutations are never blindly repeated
+poll_interval = 5.0
+poll_timeout = 1800.0 # Pending remote IDs survive timeouts
+
+[outputs]
+transcript = true
+translation = true
+formats = ["txt", "srt", "json"]
+filename = "{stem}.{mode}" # Existing {stage} templates still work
+# Use {name} for the old meeting.mov/ directory layout, or for same-stem input names.
+directory = "{stem}"
+
+[batch]
+recursive = true
+continue_on_error = true
+
+[runtime]
+offline = false # Network enabled is NOT upload permission
+request_timeout = 120.0
+overwrite = false

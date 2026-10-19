@@ -1,0 +1,59 @@
+# New providers are opt-in; existing config.toml remains the MLX configuration.
+[paths]
+input = "../saaras-test/sample.wav"
+output_dir = "private/hybrid-sample"
+
+[preprocessing]
+enabled = true
+normalize = true
+vad_backend = "none" # Set "silero" after installing requirements-hybrid.txt
+threshold = 0.35
+min_silence_seconds = 5.0 # Applied AFTER boundary padding: only long gap interiors removed
+padding_seconds = 0.75
+min_speech_ms = 250
+max_intervals = 200
+
+[recognition]
+backend = "sarvam"
+model = "saaras:v4"
+language = "ta-IN"
+vocabulary = ["API", "Kafka", "Redis", "integration"] # V4 keyterms, <=50 unique, <=64 chars each
+
+[sarvam]
+diarization = false
+budget_inr = 1.0 # REQUIRED positive cumulative ceiling before a new upload/job
+rate_per_minute = 0.49
+diarization_rate_per_minute = 0.59
+cost_margin = 1.2 # Conservative allowance; estimates exclude tax
+poll_interval = 5.0
+poll_timeout = 600.0 # Timeout preserves job ID; rerun to resume polling
+
+[translation]
+backend = "ollama"
+model = "gemma3:12b"
+endpoint = "http://127.0.0.1:11434"
+prompt = ""
+group_segments = 8
+context_segments = 1
+max_chars = 4000 # Targets + neighbor text bound; individual segments are never silently truncated
+retries = 2
+[translation.options]
+temperature = 0.0
+seed = 42
+num_ctx = 8192
+num_predict = 2048
+
+[outputs]
+transcript = true
+translation = true
+formats = ["txt", "srt", "json"]
+filename = "{stem}.{stage}"
+
+[batch]
+recursive = true
+continue_on_error = true
+
+[runtime]
+offline = false # Sarvam requires internet; this does NOT authorize uploads
+request_timeout = 120.0
+overwrite = false

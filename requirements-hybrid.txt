@@ -1,0 +1,3 @@
+# Optional: only required for preprocessing.vad_backend="silero".
+# Model weights ship in the package; no torch.hub download is used.
+silero-vad>=6.0,<7
